@@ -121,6 +121,10 @@ class WalletsFragment : Fragment(), MainFragment {
         btnSend.setOnClickListener {
             if (daemonModel.wallet!!.callAttr("is_watching_only").toJava(Boolean::class.java)) {
                 toast(R.string.this_wallet_is_watching_only_)
+            } else if (daemonModel.wallet!!.callAttr("get_receiving_addresses")
+                       .callAttr("__len__").toJava(Int::class.java) == 0) {
+                // At least one receiving address is needed to call wallet.dummy_address.
+                toast(R.string.electron_cash_is_generating_your_addresses__please_wait_)
             } else {
                 showDialog(activity!!, SendDialog())
             }
