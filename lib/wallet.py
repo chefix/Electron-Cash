@@ -468,7 +468,7 @@ class Abstract_Wallet(PrintError):
                 return height, conf, timestamp
             else:
                 height = self.unverified_tx[tx_hash]
-                return height, 0, 0
+                return height, 0, False
 
     def get_txpos(self, tx_hash):
         "return position, even if the tx is unverified"
@@ -1395,7 +1395,7 @@ class Abstract_Wallet(PrintError):
             status = PR_UNKNOWN
         return status, conf
 
-    def make_payment_request(self, addr, amount, message, expiration=None):
+    def make_payment_request(self, addr, amount, message, expiration):
         assert isinstance(addr, Address)
         timestamp = int(time.time())
         _id = bh2u(Hash(addr.to_storage_string() + "%d" % timestamp))[0:10]
@@ -1421,7 +1421,6 @@ class Abstract_Wallet(PrintError):
         requests = {addr.to_storage_string() : delete_address(value.copy())
                     for addr, value in self.receive_requests.items()}
         self.storage.put('payment_requests', requests)
-        self.storage.write()
 
     def sign_payment_request(self, key, alias, alias_addr, password):
         req = self.receive_requests.get(key)
@@ -1433,15 +1432,14 @@ class Abstract_Wallet(PrintError):
         self.receive_requests[key] = req
         self.save_payment_requests()
 
-    def add_payment_request(self, req, config, set_address_label=True):
+    def add_payment_request(self, req, config):
         addr = req['address']
         addr_text = addr.to_storage_string()
         amount = req['amount']
         message = req['memo']
         self.receive_requests[addr] = req
         self.save_payment_requests()
-        if set_address_label:
-            self.set_label(addr_text, message) # should be a default label
+        self.set_label(addr_text, message) # should be a default label
 
         rdir = config.get('requests_dir')
         if rdir and amount is not None:
@@ -1540,9 +1538,8 @@ class Simple_Wallet(Abstract_Wallet):
     def update_password(self, old_pw, new_pw, encrypt=False):
         if old_pw is None and self.has_password():
             raise InvalidPassword()
-        if self.keystore is not None:
-            self.keystore.update_password(old_pw, new_pw)
-            self.save_keystore()
+        self.keystore.update_password(old_pw, new_pw)
+        self.save_keystore()
         self.storage.set_password(new_pw, encrypt)
         self.storage.write()
 
@@ -1704,7 +1701,7 @@ class ImportedPrivkeyWallet(ImportedWalletBase):
         Abstract_Wallet.__init__(self, storage)
 
     @classmethod
-    def from_text(cls, storage, text, password=None):
+    def from_text(cls, storage, text, password):
         wallet = cls(storage)
         storage.put('use_encryption', bool(password))
         for privkey in text.split():

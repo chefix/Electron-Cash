@@ -4,9 +4,10 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.Handler
-import org.acra.ACRA
+import android.preference.PreferenceManager
 import org.acra.annotation.AcraCore
 import org.acra.annotation.AcraDialog
 
@@ -14,6 +15,7 @@ import org.acra.annotation.AcraDialog
 val DEFAULT_CHANNEL = "default"
 
 lateinit var app: App
+lateinit var prefs: SharedPreferences
 lateinit var mainHandler: Handler
 
 
@@ -25,25 +27,19 @@ class App : Application() {
 
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
-        ACRA.init(this)
+        initAcra(this)
     }
 
     override fun onCreate() {
         super.onCreate()
         app = this
+        prefs = PreferenceManager.getDefaultSharedPreferences(this)
         mainHandler = Handler()
 
         if (Build.VERSION.SDK_INT >= 26) {
             getSystemService(NotificationManager::class).createNotificationChannel(
                 NotificationChannel(DEFAULT_CHANNEL, "Default",
                                     NotificationManager.IMPORTANCE_DEFAULT))
-        }
-
-        if (!ACRA.isACRASenderServiceProcess()) {
-            initSettings()
-            initDaemon()
-            initNetwork()
-            initExchange()
         }
     }
 

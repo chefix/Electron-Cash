@@ -15,10 +15,6 @@ from .i18n import _
 from .util import PrintError, ThreadJob
 
 
-DEFAULT_ENABLED = False
-DEFAULT_CURRENCY = "EUR"
-DEFAULT_EXCHANGE = "Kraken"
-
 # See https://en.wikipedia.org/wiki/ISO_4217
 CCY_PRECISIONS = {'BHD': 3, 'BIF': 0, 'BYR': 0, 'CLF': 4, 'CLP': 0,
                   'CVE': 0, 'DJF': 0, 'GNF': 0, 'IQD': 3, 'ISK': 0,
@@ -348,7 +344,7 @@ class FxThread(ThreadJob):
                 self.exchange.update(self.ccy)
 
     def is_enabled(self):
-        return self.config.get('use_exchange_rate', DEFAULT_ENABLED)
+        return bool(self.config.get('use_exchange_rate'))
 
     def set_enabled(self, b):
         return self.config.set_key('use_exchange_rate', bool(b))
@@ -367,18 +363,17 @@ class FxThread(ThreadJob):
 
     def get_currency(self):
         '''Use when dynamic fetching is needed'''
-        return self.config.get("currency", DEFAULT_CURRENCY)
+        return self.config.get("currency", "EUR")
 
     def config_exchange(self):
-        return self.config.get('use_exchange', DEFAULT_EXCHANGE)
+        return self.config.get('use_exchange', 'Kraken')
 
     def show_history(self):
         return self.is_enabled() and self.get_history_config() and self.ccy in self.exchange.history_ccys()
 
     def set_currency(self, ccy):
         self.ccy = ccy
-        if self.get_currency() != ccy:
-            self.config.set_key('currency', ccy, True)
+        self.config.set_key('currency', ccy, True)
         self.timeout = 0 # Because self.ccy changes
         self.on_quotes()
 
@@ -408,12 +403,8 @@ class FxThread(ThreadJob):
             return Decimal(rate)
 
     def format_amount_and_units(self, btc_balance):
-        amount_str = self.format_amount(btc_balance)
-        return '' if not amount_str else "%s %s" % (amount_str, self.ccy)
-
-    def format_amount(self, btc_balance):
         rate = self.exchange_rate()
-        return '' if rate is None else self.value_str(btc_balance, rate)
+        return '' if rate is None else "%s %s" % (self.value_str(btc_balance, rate), self.ccy)
 
     def get_fiat_status_text(self, btc_balance, base_unit, decimal_point):
         rate = self.exchange_rate()

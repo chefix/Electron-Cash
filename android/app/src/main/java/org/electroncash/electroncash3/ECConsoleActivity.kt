@@ -6,10 +6,6 @@ import android.text.InputType
 import com.chaquo.python.utils.PythonConsoleActivity
 import kotlinx.android.synthetic.main.activity_console.*
 
-
-val guiConsole by lazy { guiMod("console") }
-
-
 class ECConsoleActivity : PythonConsoleActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,8 +37,8 @@ class ECConsoleActivity : PythonConsoleActivity() {
 
         override fun run() {
             // TODO: integrate console into MainActivity and remove MainActivity.instance.
-            guiConsole
-                .callAttr("AndroidConsole", app, daemonModel.commands)
+            py.getModule("electroncash_gui.android.ec_console")
+                .callAttr("ECConsole", getApplication(), MainActivity.instance!!.daemonModel.commands)
                 .callAttr("interact")
         }
     }

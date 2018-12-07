@@ -429,11 +429,8 @@ def timestamp_to_datetime(timestamp):
         return None
 
 def format_time(timestamp):
-    if timestamp:
-        date = timestamp_to_datetime(timestamp)
-        if date:
-            return date.isoformat(' ')[:-3]
-    return _("Unknown")
+    date = timestamp_to_datetime(timestamp)
+    return date.isoformat(' ')[:-3] if date else _("Unknown")
 
 
 # Takes a timestamp and returns a string with the approximation of the age
@@ -525,7 +522,7 @@ import ssl
 import time
 
 
-class SocketPipe(PrintError):
+class SocketPipe:
     def __init__(self, socket):
         self.socket = socket
         self.message = b''
@@ -553,11 +550,11 @@ class SocketPipe(PrintError):
                 if err.errno == 60:
                     raise timeout
                 elif err.errno in [11, 35, 10035]:
-                    self.print_error("socket errno %d (resource temporarily unavailable)"% err.errno)
+                    print_error("socket errno %d (resource temporarily unavailable)"% err.errno)
                     time.sleep(0.2)
                     raise timeout
                 else:
-                    self.print_error("socket error:", err)
+                    print_error("pipe: socket error", err)
                     data = b''
             except:
                 traceback.print_exc(file=sys.stderr)
